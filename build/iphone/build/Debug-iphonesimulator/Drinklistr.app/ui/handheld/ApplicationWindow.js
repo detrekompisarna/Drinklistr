@@ -1,1 +1,0 @@
-/Users/Henke/Documents/Programmering/DrinklistrGit/Resources/ui/handheld/ApplicationWindow.js
