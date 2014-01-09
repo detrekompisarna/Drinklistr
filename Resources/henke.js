@@ -1,3 +1,4 @@
+//BAJS
 //Banta ner ADB-objektet till minimum. Så konsolidera användarnamnen och .smakgrannar
 //Droppa själv från smakgrannar och smakgrannetabell
 //Gör så att endast top typ 100 smakgrannars drinkbetyg spelar roll och därmed behöver lagras i localdb.
