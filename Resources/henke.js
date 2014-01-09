@@ -452,11 +452,15 @@ rekommendera();
 
 
 
+function koerFloedet() {
+	for (var drink in redoRekArray) {
+		doenaInEnTillDryckBa(redoRekArray[drink]);
+	}
+}
 
 
-
-
-function koerFloedet(){
+//Funktionen nedan funkade bra innan mergen med Erik.
+/**function koerFloedet(){
 	if (floede) {
 		floede.close();
 	}
@@ -600,4 +604,4 @@ rekommendationslista.sections = sections;
 floede.add(rekommendationslista);
 floede.open();
 
-}
+}**/
