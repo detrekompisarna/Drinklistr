@@ -1,0 +1,1 @@
+/Users/Henke/Documents/Programmering/DrinklistrGit/Resources/ui/tablet/ApplicationWindow.js
