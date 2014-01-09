@@ -1,0 +1,1 @@
+/Users/Henke/Documents/Programmering/Drinklistr/Resources/ui/common/FirstView.js

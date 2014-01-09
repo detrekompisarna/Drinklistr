@@ -122,11 +122,11 @@ tableData.push(subHeader);
 
 Ti.include('henke.js');
  
-function doenaInEnTillDryckBa(dryckid) {
+function doenaInEnTillDryckBa(drink) {
         var row = Ti.UI.createTableViewRow({
                 className:'forumEvent', // used to improve table performance
                 selectedBackgroundColor:'white',
-                rowIndex:i, // custom property, useful for determining the row during events
+                rowIndex:drink, // custom property, useful for determining the row during events
                 height:123
         });
        
@@ -140,7 +140,7 @@ function doenaInEnTillDryckBa(dryckid) {
         var labelProductCategory = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
-                text:'RÖTT VIN',
+                text:lillaSystemetDB[drink[0]].kat1.toUpperCase(),
                 left:23, top: 19
         });
         row.add(labelProductCategory);
@@ -148,7 +148,7 @@ function doenaInEnTillDryckBa(dryckid) {
         var labelProductName = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+4},
-                text:'1884 Reservado',
+                text:lillaSystemetDB[drink[0]].namn.substr(0,27),
                 left:23, top: 45
         });
         row.add(labelProductName);
@@ -156,7 +156,7 @@ function doenaInEnTillDryckBa(dryckid) {
         var labelProductSubname = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+2},
-                text:'Pinot Noir',
+                text:lillaSystemetDB[drink[0]].subnamn,
                 left:23, top: 67
         });
         row.add(labelProductSubname);
@@ -164,7 +164,7 @@ function doenaInEnTillDryckBa(dryckid) {
         var labelProductInfo = Ti.UI.createLabel({
                 color:'#72767c',
                 font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
-                text:'PRIS 97 kr    ALKOHOL 13 %    APK 1,0',
+                text:'PRIS ' + lillaSystemetDB[drink[0]].pris[0] + ' kr    ALKOHOL 13 %    APK 1,0',
                 left:23, top: 97
         });
         row.add(labelProductInfo);
