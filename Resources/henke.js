@@ -67,7 +67,16 @@ var sjaelv = {};
 var localdb = Ti.Database.open('localdb');
 var ADB = {};
 
-//Ti.include('erik.js');
+var file = Ti.Filesystem.getFile('vaorlillasystemetdb.json');
+var data = file.read().text;
+data = data.replace(/[()]/g,'');
+var lillaSystemetDB = JSON.parse(data);
+var redoRekArray = [];
+
+localdb.execute('CREATE TABLE IF NOT EXISTS kuk' + inloggad.anvid + ' (drinkid INTEGER PRIMARY KEY,betyg INTEGER,uppdaterad FLOAT)');
+localdb.execute('CREATE TABLE IF NOT EXISTS drinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
+localdb.execute('CREATE TABLE IF NOT EXISTS smakgrannskap(anvid TEXT PRIMARY KEY,deladedrinkar INT,likhet FLOAT,score FLOAT)');
+
 
 
 var countCommonDrinks = function(anv1, anv2) {
@@ -103,6 +112,8 @@ var raeknaSmaklikhet = function(anv1, anv2) {
 
 function byggADB() {
 //ADB = collection.findAll()[0]; Detta är den gamla för gamla "databasen" bestående av en .json-fil
+	ADB[inloggad.anvid] = {};
+	ADB[inloggad.anvid].smakgrannar = {};
 	var rows = localdb.execute('SELECT anvid FROM smakgrannskap');
 	while (rows.isValidRow()) {
 		ADB[rows.fieldByName('anvid')] = {};
@@ -127,8 +138,6 @@ console.log("ADB aer nu i boerjan av byggADB sao haer laong: " + Object.keys(ADB
 delete ADB["_id"];
 
 };
-
-byggADB();
 
 
 var hittaSmakGrannar = function(anv) {
@@ -170,6 +179,8 @@ var orderNeighbourness = function(anv) {
 		ADB[anv].topSmakGrannar[i] = ADB[anv].topSmakGrannar[i][0];
 	}
 };
+
+byggADB();
 
 hittaSmakGrannar(inloggad.anvid);
 
@@ -227,7 +238,7 @@ function synkaDatabasFraon(datum) {
 		listaRekommendationer(inloggad.anvid);
 
 		// localdb.sjaelv = data hämtad från lokala DB
-		var rows = localdb.execute('SELECT * FROM egnabetyg');
+		var rows = localdb.execute('SELECT * FROM kuk' + inloggad.anvid);
 		sjaelv.drinkbetyg = {};
 		while (rows.isValidRow()) {
 			sjaelv.drinkbetyg[rows.fieldByName('drinkid')] = rows.fieldByName('betyg');
@@ -254,11 +265,6 @@ function synkaDatabasFraon(datum) {
 
 }
 
-var file = Ti.Filesystem.getFile('vaorlillasystemetdb.json');
-var data = file.read().text;
-data = data.replace(/[()]/g,'');
-var lillaSystemetDB = JSON.parse(data);
-var redoRekArray = [];
 
 if(Ti.App.Properties.getString('appLaunch')){//Detta (är true och) händer om jag redan har öppnat appen innan nån gång.
 	//Uppdatera den lokala ratingDB.
@@ -271,13 +277,7 @@ else{//Första gången appen launchas på denna telefon
   //Ti.App.Properties.setString("appLaunch", JSON.stringify({opened:true}));
   console.log("Foersta gaongen appen oeppnas...");
   Ti.App.Properties.setString("anvid", Titanium.Platform.id.replace(/-/g, ""));
-  //localdb.execute('CREATE TABLE IF NOT EXISTS users(anvid TEXT PRIMARY KEY,anvnamn TEXT,skapad TEXT,uppdaterad FLOAT);');
-  localdb.execute('CREATE TABLE IF NOT EXISTS egnabetyg(drinkid INTEGER PRIMARY KEY,betyg INTEGER,uppdaterad FLOAT)');
-  localdb.execute('CREATE TABLE IF NOT EXISTS drinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
-  localdb.execute('CREATE TABLE IF NOT EXISTS smakgrannskap(anvid TEXT PRIMARY KEY,deladedrinkar INT,likhet FLOAT,score FLOAT)');
-  //localdb.execute('INSERT OR REPLACE INTO users (anvid,uppdaterad) VALUES (?,?)', inloggad.anvid,new Date());
   synkaDatabasFraon(0);
-  localdb.close;
 }
 
 
