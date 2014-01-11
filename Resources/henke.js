@@ -73,7 +73,7 @@ data = data.replace(/[()]/g,'');
 var lillaSystemetDB = JSON.parse(data);
 var redoRekArray = [];
 
-localdb.execute('CREATE TABLE IF NOT EXISTS kuk' + inloggad.anvid + ' (drinkid INTEGER PRIMARY KEY,betyg INTEGER,uppdaterad FLOAT)');
+localdb.execute('CREATE TABLE IF NOT EXISTS egnabetyg(drinkid INTEGER PRIMARY KEY,betyg INTEGER,uppdaterad FLOAT)');
 localdb.execute('CREATE TABLE IF NOT EXISTS drinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
 localdb.execute('CREATE TABLE IF NOT EXISTS smakgrannskap(anvid TEXT PRIMARY KEY,deladedrinkar INT,likhet FLOAT,score FLOAT)');
 
@@ -116,7 +116,9 @@ function byggADB() {
 	ADB[inloggad.anvid].smakgrannar = {};
 	var rows = localdb.execute('SELECT anvid FROM smakgrannskap');
 	while (rows.isValidRow()) {
-		ADB[rows.fieldByName('anvid')] = {};
+		if (rows.fieldByName('anvid') !== inloggad.anvid){
+			ADB[rows.fieldByName('anvid')] = {};
+	    }
 	    rows.next();
 	};
 	//console.log(ADB)
@@ -124,8 +126,8 @@ function byggADB() {
 	for (var anv in ADB) {
 		ADB[anv].namn = anv.toString();
 		//console.log(ADB[anv].namn);
-		subrows = localdb.execute('SELECT * FROM kuk' + anv); //pass på att var:et kan ställa till trubbel eftersom det upprepas varje loop.
 		ADB[anv].drinkbetyg = {};
+		subrows = localdb.execute('SELECT * FROM kuk' + anv); //pass på att var:et kan ställa till trubbel eftersom det upprepas varje loop.
 		while (subrows.isValidRow()) {
 			ADB[anv].drinkbetyg[subrows.fieldByName('drinkid')] = subrows.fieldByName('betyg');
 			subrows.next();
@@ -238,7 +240,7 @@ function synkaDatabasFraon(datum) {
 		listaRekommendationer(inloggad.anvid);
 
 		// localdb.sjaelv = data hämtad från lokala DB
-		var rows = localdb.execute('SELECT * FROM kuk' + inloggad.anvid);
+		var rows = localdb.execute('SELECT * FROM egnabetyg');
 		sjaelv.drinkbetyg = {};
 		while (rows.isValidRow()) {
 			sjaelv.drinkbetyg[rows.fieldByName('drinkid')] = rows.fieldByName('betyg');
@@ -248,13 +250,15 @@ function synkaDatabasFraon(datum) {
 		//alert(JSON.stringify(andra));
 		//alert(JSON.stringify(sjaelv));
 		for (var anv in andra) {
-			andra[anv].deladeDrinkar = countCommonDrinks(sjaelv,andra[anv]);
-			andra[anv].likhet = raeknaSmaklikhet(sjaelv,andra[anv]);
-			andra[anv].score = calculateNeighbourityScore(andra[anv]);
-			localdb.execute('INSERT OR REPLACE INTO smakgrannskap (anvid,deladedrinkar,likhet,score) VALUES (?,?,?,?)', anv,andra[anv].deladeDrinkar,andra[anv].likhet,andra[anv].score);
-			localdb.execute('CREATE TABLE IF NOT EXISTS kuk' + anv + ' (drinkid INT PRIMARY KEY,betyg INT,uppdaterad FLOAT)');
-			for (var drink in andra[anv].drinkbetyg) {
-				localdb.execute("INSERT OR REPLACE INTO kuk" + anv + " (drinkid,betyg,uppdaterad) VALUES (?,?,?)",drink,andra[anv].drinkbetyg[drink],new Date());
+			if (anv !== inloggad.drinkid) {
+				andra[anv].deladeDrinkar = countCommonDrinks(sjaelv,andra[anv]);
+				andra[anv].likhet = raeknaSmaklikhet(sjaelv,andra[anv]);
+				andra[anv].score = calculateNeighbourityScore(andra[anv]);
+				localdb.execute('INSERT OR REPLACE INTO smakgrannskap (anvid,deladedrinkar,likhet,score) VALUES (?,?,?,?)', anv,andra[anv].deladeDrinkar,andra[anv].likhet,andra[anv].score);
+				localdb.execute('CREATE TABLE IF NOT EXISTS kuk' + anv + ' (drinkid INT PRIMARY KEY,betyg INT,uppdaterad FLOAT)');
+				for (var drink in andra[anv].drinkbetyg) {
+					localdb.execute("INSERT OR REPLACE INTO kuk" + anv + " (drinkid,betyg,uppdaterad) VALUES (?,?,?)",drink,andra[anv].drinkbetyg[drink],new Date());
+				}
 			}
 
 		}
@@ -409,6 +413,12 @@ function raeknaUtGlobalaDrinkscores() {
 	//Här ska jag lägga till JS som plockar all drinkdata från den lokala SQLite:n och sedan räknar ut snittbetygen på varje drink
 }
 
+function pickRandomProperty(obj) {
+    var propList = obj; //...
+	var tmpList = Object.keys(propList);
+	return tmpList[ Math.floor(Math.random()*tmpList.length) ];
+}
+
 var rekommendera = function () {
 	var returner = [];
 	var rows = localdb.execute('SELECT * FROM drinkscores ORDER BY score DESC');
@@ -417,6 +427,12 @@ var rekommendera = function () {
 		returner.push([rows.fieldByName('drinkid'), rows.fieldByName('score')]);
 		rows.next();
 	};
+	if (returner.length < 60) {
+		for (var i = 0; i < 60 - returner.length; i=i) {
+			returner.push([12,0.00001]);
+		}
+	}
+	console.log(returner);
 	redoRekArray = returner;
 	koerFloedet();
 };
