@@ -1,6 +1,9 @@
 //Banta ner ADB-objektet till minimum. Så konsolidera användarnamnen och .smakgrannar
 //Droppa själv från smakgrannar och smakgrannetabell
 //Gör så att endast top typ 100 smakgrannars drinkbetyg spelar roll och därmed behöver lagras i localdb.
+//Gör så att man faktiskt bara laddar ner uppdaterad data när appen startas.
+//Ordna en lista med opersonliga drinkratings...
+//...gör så att den listan presenteras under personliga listan. Kanske får den ha betyg 0-2 eller så. Eller vara en annan (varningens) färg!(?)
 
 /*
  * Single Window Application Template:
