@@ -1,9 +1,10 @@
 var defaultFontSize = 14;
 
-console.log("Erik, din kod laddas och funkar typ");
+console.log("Erik, din kod laddas och funkar");
  
 // Set the background color to non-black to see the status bar
 // Or set the Window statusBarStyle property to a non-default value
+
 Ti.UI.setBackgroundColor('#232a35');
  
 function StyledWindow(title) {
@@ -123,6 +124,9 @@ tableData.push(subHeader);
 Ti.include('henke.js');
  
 function doenaInEnTillDryckBa(drink) {
+	console.log("Nu har doenaInEnTillDryckBa() nåtts och nedan loggas drink-arrayen");
+	console.log(drink);
+	
         var row = Ti.UI.createTableViewRow({
                 className:'forumEvent', // used to improve table performance
                 selectedBackgroundColor:'white',
@@ -136,11 +140,11 @@ function doenaInEnTillDryckBa(drink) {
                 width:7, height:123
         });
         row.add(stretchBgRedwine);
-       
+
         var labelProductCategory = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
-                text:lillaSystemetDB[drink[0]].kat1.toUpperCase(),
+                text:lillaSystemetDB[drink[0]].kat.toUpperCase(),
                 left:23, top: 19
         });
         row.add(labelProductCategory);
@@ -148,7 +152,7 @@ function doenaInEnTillDryckBa(drink) {
         var labelProductName = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+4},
-                text:lillaSystemetDB[drink[0]].namn.substr(0,27),
+                text:lillaSystemetDB[drink[0]].namn.substr(0,27), //Lägg till "..." om den är längre än ca 27 tecken
                 left:23, top: 45
         });
         row.add(labelProductName);
@@ -156,7 +160,7 @@ function doenaInEnTillDryckBa(drink) {
         var labelProductSubname = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+2},
-                text:lillaSystemetDB[drink[0]].subnamn,
+                text:lillaSystemetDB[drink[0]].namn2, //Lägg till en "if .namn2 finns..." på denna.
                 left:23, top: 67
         });
         row.add(labelProductSubname);

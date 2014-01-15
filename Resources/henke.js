@@ -3,7 +3,10 @@
 //Gör så att endast top typ 100 smakgrannars drinkbetyg spelar roll och därmed behöver lagras i localdb.
 //Gör så att man faktiskt bara laddar ner uppdaterad data när appen startas.
 //Ordna en lista med opersonliga drinkratings...
-//...gör så att den listan presenteras under personliga listan. Kanske får den ha betyg 0-2 eller så. Eller vara en annan (varningens) färg!(?)
+//...gör så att den listan presenteras under personliga listan. Kanske får den ha betyg 0-2 eller så. Eller vara en annan (varningens) färg!(?) på rad 440
+//Vi bör fixa landsflaggor
+//Man bör kunna sortera på Koscher och Ekologiskt.
+//Man bör (kunna) separera drycker på årgång.
 
 /*
  * Single Window Application Template:
@@ -130,10 +133,12 @@ function byggADB() {
 		ADB[anv].namn = anv.toString();
 		//console.log(ADB[anv].namn);
 		ADB[anv].drinkbetyg = {};
-		subrows = localdb.execute('SELECT * FROM kuk' + anv); //pass på att var:et kan ställa till trubbel eftersom det upprepas varje loop.
-		while (subrows.isValidRow()) {
-			ADB[anv].drinkbetyg[subrows.fieldByName('drinkid')] = subrows.fieldByName('betyg');
-			subrows.next();
+		if (anv !== inloggad.anvid){
+			subrows = localdb.execute('SELECT * FROM kuk' + anv); //pass på att var:et kan ställa till trubbel eftersom det upprepas varje loop.
+			while (subrows.isValidRow()) {
+				ADB[anv].drinkbetyg[subrows.fieldByName('drinkid')] = subrows.fieldByName('betyg');
+				subrows.next();
+			}
 		}
 		
 		//console.log(ADB);
@@ -194,7 +199,7 @@ var listaRekommendationer = function(anv) {
 	ADB[anv].drinkScores = [];
 	var nyaDrinkar = [];
 	var score;
-	console.log("Härelleh!?");
+	console.log("Inne på listaRekomendationer() nu och kommer att logga objektet andra här nedanför:");
 	console.log(andra);
 	for (var anvaenders in andra) {
 		for (var dr in andra[anvaenders].drinkbetyg) {
@@ -432,9 +437,10 @@ var rekommendera = function () {
 	};
 	if (returner.length < 60) {
 		for (var i = 0; i < 60 - returner.length; i=i) {
-			returner.push([12,0.00001]);
+			returner.push([1,0.001]);
 		}
 	}
+	console.log("Här kommer det som ska bli redoRekArray");
 	console.log(returner);
 	redoRekArray = returner;
 	koerFloedet();
