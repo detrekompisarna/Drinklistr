@@ -1,4 +1,4 @@
-//Banta ner ADB-objektet till minimum. Så konsolidera användarnamnen och .smakgrannar
+//Banta ner UDB-objektet till minimum. Så konsolidera användarnamnen och .smakgrannar
 //Droppa själv från smakgrannar och smakgrannetabell
 //Gör så att endast top typ 100 smakgrannars drinkbetyg spelar roll och därmed behöver lagras i localdb.
 //Gör så att man faktiskt bara laddar ner uppdaterad data när appen startas.
@@ -71,7 +71,9 @@ var inloggad = {
 var andra = {};
 var sjaelv = {};
 var localdb = Ti.Database.open('localdb');
-var ADB = {};
+var UDB = {}; //User Data Base
+var GDS = {}; //Global Drink Scores (object)
+var oGDR = []; // Omvänd Global Drink Ranking (array)
 
 var file = Ti.Filesystem.getFile('vaorlillasystemetdb.json');
 var data = file.read().text;
@@ -82,6 +84,7 @@ var redoRekArray = [];
 localdb.execute('CREATE TABLE IF NOT EXISTS egnabetyg(drinkid INTEGER PRIMARY KEY,betyg INTEGER,uppdaterad FLOAT)');
 localdb.execute('CREATE TABLE IF NOT EXISTS drinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
 localdb.execute('CREATE TABLE IF NOT EXISTS smakgrannskap(anvid TEXT PRIMARY KEY,deladedrinkar INT,likhet FLOAT,score FLOAT)');
+localdb.execute('CREATE TABLE IF NOT EXISTS globaldrinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
 
 
 
@@ -115,56 +118,80 @@ var raeknaSmaklikhet = function(anv1, anv2) {
 	return likhet/count;
 };
 
-
-function byggADB() {
-//ADB = collection.findAll()[0]; Detta är den gamla för gamla "databasen" bestående av en .json-fil
-	ADB[inloggad.anvid] = {};
-	ADB[inloggad.anvid].smakgrannar = {};
+function buildUDB() {
+//UDB = collection.findAll()[0]; Detta är den gamla för gamla "databasen" bestående av en .json-fil
+	UDB[inloggad.anvid] = {};
+	UDB[inloggad.anvid].smakgrannar = {};
 	var rows = localdb.execute('SELECT anvid FROM smakgrannskap');
 	while (rows.isValidRow()) {
 		if (rows.fieldByName('anvid') !== inloggad.anvid){
-			ADB[rows.fieldByName('anvid')] = {};
+			UDB[rows.fieldByName('anvid')] = {};
 	    }
 	    rows.next();
 	};
-	//console.log(ADB)
+	//console.log(UDB)
 	var subrows;
-	for (var anv in ADB) {
-		ADB[anv].namn = anv.toString();
-		//console.log(ADB[anv].namn);
-		ADB[anv].drinkbetyg = {};
+	for (var anv in UDB) {
+		UDB[anv].namn = anv.toString();
+		//console.log(UDB[anv].namn);
+		UDB[anv].drinkbetyg = {};
 		if (anv !== inloggad.anvid){
 			subrows = localdb.execute('SELECT * FROM kuk' + anv); //pass på att var:et kan ställa till trubbel eftersom det upprepas varje loop.
 			while (subrows.isValidRow()) {
-				ADB[anv].drinkbetyg[subrows.fieldByName('drinkid')] = subrows.fieldByName('betyg');
+				UDB[anv].drinkbetyg[subrows.fieldByName('drinkid')] = subrows.fieldByName('betyg');
+				
+				//Här fylls GDS-objektet:
+				if(!GDS[subrows.fieldByName('drinkid')]) {
+					GDS[subrows.fieldByName('drinkid')] = {
+						totalScore: 0,
+						noOfEntries: 0,
+					};
+				}
+				else {
+					GDS[subrows.fieldByName('drinkid')].totalScore += subrows.fieldByName('betyg');
+					GDS[subrows.fieldByName('drinkid')].noOfEntries += 1;
+					//GDS[subrows.fieldByName('drinkid')].score = GDS[subrows.fieldByName('drinkid')].totalScore / GDS[subrows.fieldByName('drinkid')].noOfEntries;
+				}
 				subrows.next();
 			}
 		}
 		
-		//console.log(ADB);
+		//console.log(UDB);
 	}
 	
-console.log("ADB aer nu i boerjan av byggADB sao haer laong: " + Object.keys(ADB).length);
-delete ADB["_id"];
+	//Här fylls och sorteras omvänd Global Drink Ratings (oGDR) från Global Drink Scores (GDS)
+	for (var drink in GDS) {
+		oGDR.push([drink,GDS[drink].totalScore/GDS[drink].noOfEntries,GDS[drink].noOfEntries]);
+		if (GDS[drink].noOfEntries == 0) {
+			oGDR[oGDR.length-1][1] = 0;
+		}
+	}
+	oGDR.sort(function(a,b){return b[2]-a[2];});
+	oGDR.length = 60;
+	oGDR.sort(function(a,b){return a[2]-b[2];});
+	oGDR.sort(function(a,b){return a[1]-b[1];});
+	
+console.log("UDB aer nu i boerjan av buildUDB sao haer laong: " + Object.keys(UDB).length);
+delete UDB["_id"];
 
 };
 
 
 var hittaSmakGrannar = function(anv) {
 	console.log("Ordnar smakGrannar foer " + anv + "...");
-	//console.log(ADB);
-	ADB[anv].smakGrannar = {};
-	for (var granne in ADB) {
+	//console.log(UDB);
+	UDB[anv].smakGrannar = {};
+	for (var granne in UDB) {
 		if (granne !== anv){
-			ADB[anv].smakGrannar[granne] = {};
-			ADB[anv].smakGrannar[granne].likhet = raeknaSmaklikhet(ADB[anv],ADB[granne]);
-			ADB[anv].smakGrannar[granne].deladeDrinkar = countCommonDrinks(ADB[anv],ADB[granne]);
-			ADB[anv].smakGrannar[granne].score = calculateNeighbourityScore(ADB[anv].smakGrannar[granne]);
-			console.log("...hittade " + granne + ", vars likhet, deladeDrinkar, and score raeknades till: " + ADB[anv].smakGrannar[granne].likhet + ", " + ADB[anv].smakGrannar[granne].deladeDrinkar + " respektive " + ADB[anv].smakGrannar[granne].score);
+			UDB[anv].smakGrannar[granne] = {};
+			UDB[anv].smakGrannar[granne].likhet = raeknaSmaklikhet(UDB[anv],UDB[granne]);
+			UDB[anv].smakGrannar[granne].deladeDrinkar = countCommonDrinks(UDB[anv],UDB[granne]);
+			UDB[anv].smakGrannar[granne].score = calculateNeighbourityScore(UDB[anv].smakGrannar[granne]);
+			console.log("...hittade " + granne + ", vars likhet, deladeDrinkar, and score raeknades till: " + UDB[anv].smakGrannar[granne].likhet + ", " + UDB[anv].smakGrannar[granne].deladeDrinkar + " respektive " + UDB[anv].smakGrannar[granne].score);
 		}
 	}
 	orderNeighbourness(anv);
-	return ADB[anv];
+	return UDB[anv];
 };
 
 var calculateNeighbourityScore = function(nb) {
@@ -179,49 +206,45 @@ var calculateNeighbourityScore = function(nb) {
 };
 
 var orderNeighbourness = function(anv) {
-	ADB[anv].topSmakGrannar = [];
+	UDB[anv].topSmakGrannar = [];
 	
-	for (var neigh in ADB[anv].smakGrannar) {
-		ADB[anv].topSmakGrannar.push([neigh,ADB[anv].smakGrannar[neigh].score]);
-		ADB[anv].topSmakGrannar.sort(function(a,b){return b[1]-a[1];});
+	for (var neigh in UDB[anv].smakGrannar) {
+		UDB[anv].topSmakGrannar.push([neigh,UDB[anv].smakGrannar[neigh].score]);
+		UDB[anv].topSmakGrannar.sort(function(a,b){return b[1]-a[1];});
 	}
-	for (var i = ADB[anv].topSmakGrannar.length - 1; i >= 0; i--) {
-		ADB[anv].topSmakGrannar[i] = ADB[anv].topSmakGrannar[i][0];
+	for (var i = UDB[anv].topSmakGrannar.length - 1; i >= 0; i--) {
+		UDB[anv].topSmakGrannar[i] = UDB[anv].topSmakGrannar[i][0];
 	}
 };
 
-byggADB();
+buildUDB();
 
 hittaSmakGrannar(inloggad.anvid);
 
 
-var listaRekommendationer = function(anv) {
-	ADB[anv].drinkScores = [];
+var listRecommendations = function(anv) {
 	var nyaDrinkar = [];
 	var score;
-	console.log("Inne på listaRekomendationer() nu och kommer att logga objektet andra här nedanför:");
-	console.log(andra);
+	//console.log("Inne på listRecommendations() nu och kommer att logga objektet andra här nedanför:");
+	//console.log(andra);
 	for (var anvaenders in andra) {
 		for (var dr in andra[anvaenders].drinkbetyg) {
 			nyaDrinkar.push(andra[anvaenders].drinkbetyg[dr]);
-			
 		}
 	}
-	console.log(nyaDrinkar);
+	//console.log(nyaDrinkar);
+	UDB[anv].drinkScores = [];
 	for (var drink in lillaSystemetDB) {//Det är nog det att den inte (borde) ha nån lillaStstemetDB som gör att det pajjar senare.
 		score = summeraEnDrinkscore(anv, drink);
-		ADB[anv].drinkScores.push([drink,summeraEnDrinkscore(anv, drink)]); //Den där "* 2":an ska såklart inte vara där sedan.
+		UDB[anv].drinkScores.push([drink,summeraEnDrinkscore(anv, drink)]); 
 		if (score > 0) {
 			//console.log(score);
     		localdb.execute('INSERT OR REPLACE INTO drinkscores(drinkid,score,uppdaterad) VALUES (?,?,?)', drink,score,new Date());
 		}
 	}
-	/**for (var i = 0; i < ADB[anv].drinkScores.length; i++) {
-		console.log(ADB[anv].drinkScores[i][1]);
-	}**/
-	ADB[anv].drinkScores.sort(function(a,b){return b[1]-a[1];});
+	UDB[anv].drinkScores.sort(function(a,b){return b[1]-a[1];});
 	//console.log("Haer kommer naogra av " + anv + "s drinkScores precis efter att de har blivit sorterade.");
-	//for (var i = 0; i < 10; i++) {console.log(ADB[anv].drinkScores[i]);}
+	//for (var i = 0; i < 10; i++) {console.log(UDB[anv].drinkScores[i]);}
 	//console.log("Daer var naogra av " + anv + "s drinkScores precis efter att de hade blivit sorterade.");
 };
 
@@ -245,7 +268,7 @@ function synkaDatabasFraon(datum) {
 				drinkbetyg: haemtat[anvae]
 			};
 		}
-		listaRekommendationer(inloggad.anvid);
+		listRecommendations(inloggad.anvid);
 
 		// localdb.sjaelv = data hämtad från lokala DB
 		var rows = localdb.execute('SELECT * FROM egnabetyg');
@@ -285,7 +308,6 @@ if(Ti.App.Properties.getString('appLaunch')){//Detta (är true och) händer om j
 }
 else{//Första gången appen launchas på denna telefon
   //Ti.App.Propoerties.setString("GaongerÖppnad",1);
-  var foerstaGaongen = true;
   //Ti.App.Properties.setString("appLaunch", JSON.stringify({opened:true}));
   console.log("Foersta gaongen appen oeppnas...");
   Ti.App.Properties.setString("anvid", Titanium.Platform.id.replace(/-/g, ""));
@@ -293,19 +315,8 @@ else{//Första gången appen launchas på denna telefon
 }
 
 
-koerFloedet();
 
 console.log(Ti.App.Properties);
-
-
-/**collection.raeknaFolk = function() {
-	return Object.keys(collection.findOne(collection.getLastInsertId()));
-};**/
-
-/**if (foerstaGaongen === false) {
-	var bedoemningsDB = collection.findAll()[0];
-}**/
-
 
 
 
@@ -329,11 +340,11 @@ var summeraEnDrinkscore = function(anv, drink) {
 	var summer = 0;
 	var counter = 0;
 	var granne;
-	for (var i = 0; i < ADB[anv].topSmakGrannar.length; i++) {
-		if (ADB[ADB[anv].topSmakGrannar[i]].drinkbetyg[drink] !== undefined) {
-			granne = ADB[anv].topSmakGrannar[i];
-			neighboursRating = ADB[granne].drinkbetyg[drink];
-			neighboursScore = ADB[anv].smakGrannar[granne].score;
+	for (var i = 0; i < UDB[anv].topSmakGrannar.length; i++) {
+		if (UDB[UDB[anv].topSmakGrannar[i]].drinkbetyg[drink] !== undefined) {
+			granne = UDB[anv].topSmakGrannar[i];
+			neighboursRating = UDB[granne].drinkbetyg[drink];
+			neighboursScore = UDB[anv].smakGrannar[granne].score;
 			summer += neighboursRating * neighboursScore;
 			counter += neighboursScore;
 			if (counter >= 1) {
@@ -367,7 +378,7 @@ var getTopDrinks = function(anv,rrd,antal) {
 function saollaPaoRedanDruckna(obj, ai) {
 	if (obj.redanDruckna === true) {return false;}
 	else {
-		for (var dd in ADB[obj.namn].drinkbetyg) {
+		for (var dd in UDB[obj.namn].drinkbetyg) {
 			if (ai === dd) {
 				return true;
 			}
@@ -410,16 +421,12 @@ function saollaPaoKategori(ai, arr) {
 
 var addaBetyg = function(arr) {
 	//Denna är nu gammal när SQLiten börjar funka. 
-	if (!ADB[arr[0]]) {
-		ADB[arr[0]] = {};
-		ADB[arr[0]].drinkbetyg = {};
+	if (!UDB[arr[0]]) {
+		UDB[arr[0]] = {};
+		UDB[arr[0]].drinkbetyg = {};
 	}
-	ADB[arr[0]].drinkbetyg[arr[1]] = arr[2];
+	UDB[arr[0]].drinkbetyg[arr[1]] = arr[2];
 };
-
-function raeknaUtGlobalaDrinkscores() {
-	//Här ska jag lägga till JS som plockar all drinkdata från den lokala SQLite:n och sedan räknar ut snittbetygen på varje drink
-}
 
 function pickRandomProperty(obj) {
     var propList = obj; //...
@@ -437,7 +444,7 @@ var rekommendera = function () {
 	};
 	if (returner.length < 60) {
 		for (var i = 0; i < 60 - returner.length; i=i) {
-			returner.push([1,0.001]);
+			returner.push(oGDR.pop());
 		}
 	}
 	console.log("Här kommer det som ska bli redoRekArray");
@@ -478,8 +485,16 @@ rekommendera();
 
 
 function koerFloedet() {
-	for (var drink in redoRekArray) {
-		doenaInEnTillDryckBa(redoRekArray[drink]);
+	console.log("Nu är vi inne på koerFloedet() och redoRekArray loggas här nedan:");
+	console.log(redoRekArray);
+	for (var n in redoRekArray) {
+		if (lillaSystemetDB[redoRekArray[n][0]]) {
+			console.log("Här kodar jag nu och här kommer en siffra:");
+			console.log(redoRekArray[n]);
+			console.log(redoRekArray[n][0]);
+			console.log(redoRekArray[n][1]);
+			doenaInEnTillDryckBa(redoRekArray[n][0],redoRekArray[n][1]);
+		}
 	}
 }
 

@@ -123,14 +123,12 @@ tableData.push(subHeader);
 
 Ti.include('henke.js');
  
-function doenaInEnTillDryckBa(drink) {
-	console.log("Nu har doenaInEnTillDryckBa() nåtts och nedan loggas drink-arrayen");
-	console.log(drink);
+function doenaInEnTillDryckBa(drinkId,drinkScore) {
 	
         var row = Ti.UI.createTableViewRow({
                 className:'forumEvent', // used to improve table performance
                 selectedBackgroundColor:'white',
-                rowIndex:drink, // custom property, useful for determining the row during events
+                rowIndex:drinkId, // custom property, useful for determining the row during events
                 height:123
         });
        
@@ -140,19 +138,22 @@ function doenaInEnTillDryckBa(drink) {
                 width:7, height:123
         });
         row.add(stretchBgRedwine);
-
-        var labelProductCategory = Ti.UI.createLabel({
-                color:'#212a38',
-                font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
-                text:lillaSystemetDB[drink[0]].kat.toUpperCase(),
-                left:23, top: 19
-        });
+		
+		if (lillaSystemetDB[drinkId].kat) { //Den här if:en behöver vara med för att alla drycker verkar in ha en kategori.
+        	var labelProductCategory = Ti.UI.createLabel({
+                	color:'#212a38',
+                	font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
+                	text:lillaSystemetDB[drinkId].kat.toUpperCase(),
+            	    left:23, top: 19
+        	});
+        }
+       
         row.add(labelProductCategory);
  
         var labelProductName = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+4},
-                text:lillaSystemetDB[drink[0]].namn.substr(0,27), //Lägg till "..." om den är längre än ca 27 tecken
+                text:lillaSystemetDB[drinkId].namn.substr(0,27), //Lägg till "..." om den är längre än ca 27 tecken
                 left:23, top: 45
         });
         row.add(labelProductName);
@@ -160,7 +161,7 @@ function doenaInEnTillDryckBa(drink) {
         var labelProductSubname = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+2},
-                text:lillaSystemetDB[drink[0]].namn2, //Lägg till en "if .namn2 finns..." på denna.
+                text:lillaSystemetDB[drinkId].namn2, //Lägg till en "if .namn2 finns..." på denna.
                 left:23, top: 67
         });
         row.add(labelProductSubname);
@@ -168,7 +169,7 @@ function doenaInEnTillDryckBa(drink) {
         var labelProductInfo = Ti.UI.createLabel({
                 color:'#72767c',
                 font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
-                text:'PRIS ' + lillaSystemetDB[drink[0]].pris[0] + ' kr    ALKOHOL 13 %    APK 1,0',
+                text:'PRIS ' + lillaSystemetDB[drinkId].pris[0] + ' kr    ALKOHOL 13 %    APK 1,0',
                 left:23, top: 97
         });
         row.add(labelProductInfo);
