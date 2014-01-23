@@ -169,7 +169,7 @@ function doenaInEnTillDryckBa(drinkId,drinkScore) {
         var labelProductInfo = Ti.UI.createLabel({
                 color:'#72767c',
                 font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
-                text:'PRIS ' + lillaSystemetDB[drinkId].pris[0] + ' kr    ALKOHOL 13 %    APK 1,0',
+                text:'PRIS ' + lillaSystemetDB[drinkId].pris[0] + ' kr    ALKOHOL ' + lillaSystemetDB[drinkId].alk + '    APK 1,0',
                 left:23, top: 97
         });
         row.add(labelProductInfo);

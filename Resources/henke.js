@@ -2,11 +2,9 @@
 //Droppa själv från smakgrannar och smakgrannetabell
 //Gör så att endast top typ 100 smakgrannars drinkbetyg spelar roll och därmed behöver lagras i localdb.
 //Gör så att man faktiskt bara laddar ner uppdaterad data när appen startas.
-//Ordna en lista med opersonliga drinkratings...
-//...gör så att den listan presenteras under personliga listan. Kanske får den ha betyg 0-2 eller så. Eller vara en annan (varningens) färg!(?) på rad 440
-//Vi bör fixa landsflaggor
 //Man bör kunna sortera på Koscher och Ekologiskt.
 //Man bör (kunna) separera drycker på årgång.
+//Förkorta JSONfilen som är vår systemet-databas. Förkorta alla kateborier först och främst.
 
 /*
  * Single Window Application Template:
@@ -69,7 +67,7 @@ var inloggad = {
 	anvid: Titanium.Platform.getId().replace(/-/g, "") //Annars kan Titanium.Platform.id också funka
 };
 var andra = {};
-var sjaelv = {};
+var self = {};
 var localdb = Ti.Database.open('localdb');
 var UDB = {}; //User Data Base
 var GDS = {}; //Global Drink Scores (object)
@@ -270,20 +268,20 @@ function synkaDatabasFraon(datum) {
 		}
 		listRecommendations(inloggad.anvid);
 
-		// localdb.sjaelv = data hämtad från lokala DB
+		// localdb.self = data hämtad från lokala DB
 		var rows = localdb.execute('SELECT * FROM egnabetyg');
-		sjaelv.drinkbetyg = {};
+		self.drinkbetyg = {};
 		while (rows.isValidRow()) {
-			sjaelv.drinkbetyg[rows.fieldByName('drinkid')] = rows.fieldByName('betyg');
+			self.drinkbetyg[rows.fieldByName('drinkid')] = rows.fieldByName('betyg');
 		    rows.next();
 		};
 		rows.close();
 		//alert(JSON.stringify(andra));
-		//alert(JSON.stringify(sjaelv));
+		//alert(JSON.stringify(self));
 		for (var anv in andra) {
 			if (anv !== inloggad.drinkid) {
-				andra[anv].deladeDrinkar = countCommonDrinks(sjaelv,andra[anv]);
-				andra[anv].likhet = raeknaSmaklikhet(sjaelv,andra[anv]);
+				andra[anv].deladeDrinkar = countCommonDrinks(self,andra[anv]);
+				andra[anv].likhet = raeknaSmaklikhet(self,andra[anv]);
 				andra[anv].score = calculateNeighbourityScore(andra[anv]);
 				localdb.execute('INSERT OR REPLACE INTO smakgrannskap (anvid,deladedrinkar,likhet,score) VALUES (?,?,?,?)', anv,andra[anv].deladeDrinkar,andra[anv].likhet,andra[anv].score);
 				localdb.execute('CREATE TABLE IF NOT EXISTS kuk' + anv + ' (drinkid INT PRIMARY KEY,betyg INT,uppdaterad FLOAT)');
@@ -438,7 +436,7 @@ var rekommendera = function () {
 	var returner = [];
 	var rows = localdb.execute('SELECT * FROM drinkscores ORDER BY score DESC');
 		while (rows.isValidRow()) {
-		//sjaelv.drinkbetyg[rows.fieldByName('drinkid')] = rows.fieldByName('betyg');
+		//self.drinkbetyg[rows.fieldByName('drinkid')] = rows.fieldByName('betyg');
 		returner.push([rows.fieldByName('drinkid'), rows.fieldByName('score')]);
 		rows.next();
 	};
@@ -447,8 +445,6 @@ var rekommendera = function () {
 			returner.push(oGDR.pop());
 		}
 	}
-	console.log("Här kommer det som ska bli redoRekArray");
-	console.log(returner);
 	redoRekArray = returner;
 	koerFloedet();
 };
@@ -485,15 +481,12 @@ rekommendera();
 
 
 function koerFloedet() {
-	console.log("Nu är vi inne på koerFloedet() och redoRekArray loggas här nedan:");
-	console.log(redoRekArray);
 	for (var n in redoRekArray) {
-		if (lillaSystemetDB[redoRekArray[n][0]]) {
-			console.log("Här kodar jag nu och här kommer en siffra:");
-			console.log(redoRekArray[n]);
-			console.log(redoRekArray[n][0]);
-			console.log(redoRekArray[n][1]);
+		if (lillaSystemetDB[redoRekArray[n][0]]) {//Ibland finns inte en votad dryck i databasen. Denna if ser till att bajs inte slår i taket när det händer.
 			doenaInEnTillDryckBa(redoRekArray[n][0],redoRekArray[n][1]);
+		}
+		else {
+			//ajax-bajjax, skicka en notification, typ e-mail till oss så vi kan fixa detta problem.
 		}
 	}
 }
