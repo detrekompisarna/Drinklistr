@@ -434,12 +434,20 @@ function pickRandomProperty(obj) {
 
 var rekommendera = function () {
 	var returner = [];
+	self.floedeQuality = 0;
 	var rows = localdb.execute('SELECT * FROM drinkscores ORDER BY score DESC');
 		while (rows.isValidRow()) {
 		//self.drinkbetyg[rows.fieldByName('drinkid')] = rows.fieldByName('betyg');
 		returner.push([rows.fieldByName('drinkid'), rows.fieldByName('score')]);
+		if(returner.length = 10) {
+			for (var i = 0; i < 10; i++) {
+				self.floedeQuality += returner[i][1];
+			}
+			self.floedeQuality *= 2;
+		}
 		rows.next();
 	};
+	console.log("Så här hög är flödeQuality på en skala mellan ett och hundra: " + self.floedeQuality);
 	if (returner.length < 60) {
 		for (var i = 0; i < 60 - returner.length; i=i) {
 			returner.push(oGDR.pop());
@@ -475,7 +483,6 @@ var form = {
 //addaBetyg(bedoemningsSubmit);
 
 
-var rekommendationsrequest = {"namn": inloggad.anvid, "redanDruckna": form.druckna, "antal": floedescap, "maxpris": form.maxpris, "soekterm": form.soekterm, "": []};
 rekommendera();
 
 
