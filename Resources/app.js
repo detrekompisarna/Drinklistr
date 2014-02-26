@@ -139,11 +139,11 @@ function doenaInEnTillDryckBa(drinkId,drinkScore) {
         });
         row.add(stretchBgRedwine);
 		
-		if (lillaSystemetDB[drinkId].kat) { //Den här if:en behöver vara med för att alla drycker verkar in ha en kategori.
+		if (monopolistsDatabase[drinkId].kat) { //Den här if:en behöver vara med för att alla drycker verkar in ha en kategori.
         	var labelProductCategory = Ti.UI.createLabel({
                 	color:'#212a38',
                 	font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
-                	text:lillaSystemetDB[drinkId].kat.toUpperCase(),
+                	text:monopolistsDatabase[drinkId].kat.toUpperCase(),
             	    left:23, top: 19
         	});
         }
@@ -153,7 +153,7 @@ function doenaInEnTillDryckBa(drinkId,drinkScore) {
         var labelProductName = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+4},
-                text:lillaSystemetDB[drinkId].namn.substr(0,27), //Lägg till "..." om den är längre än ca 27 tecken
+                text:monopolistsDatabase[drinkId].namn.substr(0,27), //Lägg till "..." om den är längre än ca 27 tecken
                 left:23, top: 45
         });
         row.add(labelProductName);
@@ -161,7 +161,7 @@ function doenaInEnTillDryckBa(drinkId,drinkScore) {
         var labelProductSubname = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+2},
-                text:lillaSystemetDB[drinkId].namn2, //Lägg till en "if .namn2 finns..." på denna.
+                text:monopolistsDatabase[drinkId].namn2, //Lägg till en "if .namn2 finns..." på denna.
                 left:23, top: 67
         });
         row.add(labelProductSubname);
@@ -169,7 +169,7 @@ function doenaInEnTillDryckBa(drinkId,drinkScore) {
         var labelProductInfo = Ti.UI.createLabel({
                 color:'#72767c',
                 font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3},
-                text:'PRIS ' + lillaSystemetDB[drinkId].pris[0] + ' kr    ALKOHOL ' + lillaSystemetDB[drinkId].alk + '    APK 1,0',
+                text:'PRIS ' + monopolistsDatabase[drinkId].pris[0] + ' kr    ALKOHOL ' + monopolistsDatabase[drinkId].alk + '    APK 1,0',
                 left:23, top: 97
         });
         row.add(labelProductInfo);

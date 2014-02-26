@@ -76,7 +76,7 @@ var oGDR = []; // Omvänd Global Drink Ranking (array)
 var file = Ti.Filesystem.getFile('vaorlillasystemetdb.json');
 var data = file.read().text;
 data = data.replace(/[()]/g,'');
-var lillaSystemetDB = JSON.parse(data);
+var lillaSystemetDB = JSON.parse(data); //This is the Database from the monolopist, with price, year, name, category, etc.
 var redoRekArray = [];
 
 localdb.execute('CREATE TABLE IF NOT EXISTS egnabetyg(drinkid INTEGER PRIMARY KEY,betyg INTEGER,uppdaterad FLOAT)');
@@ -96,7 +96,7 @@ var countCommonDrinks = function(anv1, anv2) {
 	return count;
 };
 
-var raeknaSmaklikhet = function(anv1, anv2) {
+var calcTasteSimilarity = function(anv1, anv2) {
 	var i;
 	var likhet = 0;
 	var count = 0;
@@ -182,7 +182,7 @@ var hittaSmakGrannar = function(anv) {
 	for (var granne in UDB) {
 		if (granne !== anv){
 			UDB[anv].smakGrannar[granne] = {};
-			UDB[anv].smakGrannar[granne].likhet = raeknaSmaklikhet(UDB[anv],UDB[granne]);
+			UDB[anv].smakGrannar[granne].likhet = calcTasteSimilarity(UDB[anv],UDB[granne]);
 			UDB[anv].smakGrannar[granne].deladeDrinkar = countCommonDrinks(UDB[anv],UDB[granne]);
 			UDB[anv].smakGrannar[granne].score = calculateNeighbourityScore(UDB[anv].smakGrannar[granne]);
 			console.log("...hittade " + granne + ", vars likhet, deladeDrinkar, and score raeknades till: " + UDB[anv].smakGrannar[granne].likhet + ", " + UDB[anv].smakGrannar[granne].deladeDrinkar + " respektive " + UDB[anv].smakGrannar[granne].score);
@@ -233,8 +233,8 @@ var listRecommendations = function(anv) {
 	//console.log(nyaDrinkar);
 	UDB[anv].drinkScores = [];
 	for (var drink in lillaSystemetDB) {//Det är nog det att den inte (borde) ha nån lillaStstemetDB som gör att det pajjar senare.
-		score = summeraEnDrinkscore(anv, drink);
-		UDB[anv].drinkScores.push([drink,summeraEnDrinkscore(anv, drink)]); 
+		score = sumOneDrinkScore(anv, drink);
+		UDB[anv].drinkScores.push([drink,sumOneDrinkScore(anv, drink)]); 
 		if (score > 0) {
 			//console.log(score);
     		localdb.execute('INSERT OR REPLACE INTO drinkscores(drinkid,score,uppdaterad) VALUES (?,?,?)', drink,score,new Date());
@@ -246,7 +246,7 @@ var listRecommendations = function(anv) {
 	//console.log("Daer var naogra av " + anv + "s drinkScores precis efter att de hade blivit sorterade.");
 };
 
-function synkaDatabasFraon(datum) {
+function SyncDatabaseFrom(datum) {
 	var datanerreq = Titanium.Network.createHTTPClient();
 	var url = "http://drinklistr.se/dataner.php";
 	datanerreq.open("POST", url);
@@ -281,7 +281,7 @@ function synkaDatabasFraon(datum) {
 		for (var anv in andra) {
 			if (anv !== inloggad.drinkid) {
 				andra[anv].deladeDrinkar = countCommonDrinks(self,andra[anv]);
-				andra[anv].likhet = raeknaSmaklikhet(self,andra[anv]);
+				andra[anv].likhet = calcTasteSimilarity(self,andra[anv]);
 				andra[anv].score = calculateNeighbourityScore(andra[anv]);
 				localdb.execute('INSERT OR REPLACE INTO smakgrannskap (anvid,deladedrinkar,likhet,score) VALUES (?,?,?,?)', anv,andra[anv].deladeDrinkar,andra[anv].likhet,andra[anv].score);
 				localdb.execute('CREATE TABLE IF NOT EXISTS kuk' + anv + ' (drinkid INT PRIMARY KEY,betyg INT,uppdaterad FLOAT)');
@@ -300,7 +300,7 @@ function synkaDatabasFraon(datum) {
 
 
 if(Ti.App.Properties.getString('appLaunch')){//Detta (är true och) händer om jag redan har öppnat appen innan nån gång.
-	//Uppdatera den lokala ratingDB.
+	//Uppdate the local ratingDB.
   console.log("2+:a gaongen appen oeppnas...");
   //localdb.execute('INSERT OR REPLACE INTO users (anvid,uppdaterad) VALUES (?,?)', inloggad.anvid,new Date());
 }
@@ -309,7 +309,7 @@ else{//Första gången appen launchas på denna telefon
   //Ti.App.Properties.setString("appLaunch", JSON.stringify({opened:true}));
   console.log("Foersta gaongen appen oeppnas...");
   Ti.App.Properties.setString("anvid", Titanium.Platform.id.replace(/-/g, ""));
-  synkaDatabasFraon(0);
+  SyncDatabaseFrom(0);
 }
 
 
@@ -332,7 +332,7 @@ var checkCat = function(drink,kat) {
 };
 
 
-var summeraEnDrinkscore = function(anv, drink) {
+var sumOneDrinkScore = function(anv, drink) {
 	var neighboursRating;
 	var neighboursScore;
 	var summer = 0;
@@ -346,7 +346,7 @@ var summeraEnDrinkscore = function(anv, drink) {
 			summer += neighboursRating * neighboursScore;
 			counter += neighboursScore;
 			if (counter >= 1) {
-				console.log("summeraEnDrinkscore for " + anv + "'s drink " + drink + "'s counter reached 1 and therefore stopped counting and will return " + summer/counter);
+				console.log("sumOneDrinkScore for " + anv + "'s drink " + drink + "'s counter reached 1 and therefore stopped counting and will return " + summer/counter);
 				return summer/counter;
 			}
 		}
@@ -417,7 +417,7 @@ function saollaPaoKategori(ai, arr) {
 	return true;
 }
 
-var addaBetyg = function(arr) {
+var addRating = function(arr) {
 	//Denna är nu gammal när SQLiten börjar funka. 
 	if (!UDB[arr[0]]) {
 		UDB[arr[0]] = {};
@@ -432,7 +432,7 @@ function pickRandomProperty(obj) {
 	return tmpList[ Math.floor(Math.random()*tmpList.length) ];
 }
 
-var rekommendera = function () {
+var recommend = function () {
 	var returner = [];
 	self.floedeQuality = 0;
 	var rows = localdb.execute('SELECT * FROM drinkscores ORDER BY score DESC');
@@ -454,7 +454,7 @@ var rekommendera = function () {
 		}
 	}
 	redoRekArray = returner;
-	koerFloedet();
+	runFlow();
 };
 
 /**var prepReq = function(form) {
@@ -466,7 +466,7 @@ var rekommendera = function () {
 	var maxpris = Math.parseInt(form.maxpris.value);
 	var soekterm = form.soekterm.value;
 	console.log({"namn": namn, "redanDruckna": redanDruckna, "antal": floetescap, "maxpris": maxpris, "soekterm": soekterm, "kat": form.kat});
-	console.log(rekommendera({"namn": namn, "redanDruckna": redanDruckna, "antal": floedescap, "maxpris": maxpris, "soekterm": soekterm, "kat": form.kat}));
+	console.log(recommend({"namn": namn, "redanDruckna": redanDruckna, "antal": floedescap, "maxpris": maxpris, "soekterm": soekterm, "kat": form.kat}));
 };**/
 
 var floedescap = 100;
@@ -480,14 +480,14 @@ var form = {
 
 //Följande rad är nog för gammal nu när man betygsätter från en annan funktion funkar.
 //var bedoemningsSubmit = [inloggad.anvid,131,3]; //[Anvid, Artikelnummer, Rating(1-5)]
-//addaBetyg(bedoemningsSubmit);
+//addRating(bedoemningsSubmit);
 
 
-rekommendera();
+recommend();
 
 
 
-function koerFloedet() {
+function runFlow() {
 	for (var n in redoRekArray) {
 		if (lillaSystemetDB[redoRekArray[n][0]]) {//Ibland finns inte en votad dryck i databasen. Denna if ser till att bajs inte slår i taket när det händer.
 			doenaInEnTillDryckBa(redoRekArray[n][0],redoRekArray[n][1]);
@@ -500,7 +500,7 @@ function koerFloedet() {
 
 
 //Funktionen nedan funkade bra innan mergen med Erik.
-/**function koerFloedet(){
+/**function runFlow(){
 	if (floede) {
 		floede.close();
 	}
@@ -590,7 +590,7 @@ rekommendationslista.addEventListener('itemclick', function (e) {
 	});
 
 	alertWindow.show();
-	koerFloedet();
+	runFlow();
 
 	//...från http://developer.appcelerator.com/question/87471/alertdialog-actions
 });
@@ -598,7 +598,7 @@ rekommendationslista.addEventListener('itemclick', function (e) {
 
 var sections = [];
 
-var femStjaernor = Ti.UI.createListSection({ headerTitle: 'Dessa drycker rekommenderas som fan för dig din jävel'});
+var femStjaernor = Ti.UI.createListSection({ headerTitle: 'Dessa drycker recommends som fan för dig din jävel'});
 var fyraStjaernor = Ti.UI.createListSection({ headerTitle: 'Dessa drycker lär du tycka är ganska goa, fan'});
 var treStjaernor = Ti.UI.createListSection({ headerTitle: 'Mjä...'});
 var tvaoStjaernor = Ti.UI.createListSection({ headerTitle: 'Smakar typ piss'});
