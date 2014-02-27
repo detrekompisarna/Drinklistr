@@ -76,8 +76,8 @@ var oGDR = []; // Omvänd Global Drink Ranking (array)
 var file = Ti.Filesystem.getFile('vaorlillasystemetdb.json');
 var data = file.read().text;
 data = data.replace(/[()]/g,'');
-var lillaSystemetDB = JSON.parse(data); //This is the Database from the monolopist, with price, year, name, category, etc.
-var redoRekArray = [];
+var monopolistsDatabase = JSON.parse(data); //This is the Database from the monolopist, with price, year, name, category, etc.
+var readyRecArray = [];
 
 localdb.execute('CREATE TABLE IF NOT EXISTS egnabetyg(drinkid INTEGER PRIMARY KEY,betyg INTEGER,uppdaterad FLOAT)');
 localdb.execute('CREATE TABLE IF NOT EXISTS drinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
@@ -232,7 +232,7 @@ var listRecommendations = function(anv) {
 	}
 	//console.log(nyaDrinkar);
 	UDB[anv].drinkScores = [];
-	for (var drink in lillaSystemetDB) {//Det är nog det att den inte (borde) ha nån lillaStstemetDB som gör att det pajjar senare.
+	for (var drink in monopolistsDatabase) {//Det är nog det att den inte (borde) ha nån lillaStstemetDB som gör att det pajjar senare.
 		score = sumOneDrinkScore(anv, drink);
 		UDB[anv].drinkScores.push([drink,sumOneDrinkScore(anv, drink)]); 
 		if (score > 0) {
@@ -387,7 +387,7 @@ function saollaPaoRedanDruckna(obj, ai) {
 
 function saollaPaoPris(ai, pris) {
 	if (pris !== "" && pris !== null && pris !== undefined && pris.length > 0){
-		if (lillaSystemetDB[ai].pris > pris || lillaSystemetDB[ai].pris[0] > pris) {
+		if (monopolistsDatabase[ai].pris > pris || monopolistsDatabase[ai].pris[0] > pris) {
 			return true;
 		}
 	}
@@ -395,8 +395,8 @@ function saollaPaoPris(ai, pris) {
 }
 
 function saollaPaoSoekterm(ai, st) {
-	if (st !== "" && st !== null && st.length > 0 && lillaSystemetDB[ai].namn.indexOf(st) === -1) {
-		//console.log(lillaSystemetDB[ai].namn + " saollades pao soekterm")
+	if (st !== "" && st !== null && st.length > 0 && monopolistsDatabase[ai].namn.indexOf(st) === -1) {
+		//console.log(monopolistsDatabase[ai].namn + " saollades pao soekterm")
 		return true;
 	}
 	else {
@@ -407,13 +407,13 @@ function saollaPaoSoekterm(ai, st) {
 function saollaPaoKategori(ai, arr) {
 	if (arr !== undefined && arr.length > 0){
 		for (var kat in arr) {
-			if (lillaSystemetDB[ai].kat1 === arr[kat]) {
+			if (monopolistsDatabase[ai].kat1 === arr[kat]) {
 				return false;
 			}
 		}
 	}
 	else {return false;}
-	//console.log(lillaSystemetDB[ai].namn + " saollades pao kategori");
+	//console.log(monopolistsDatabase[ai].namn + " saollades pao kategori");
 	return true;
 }
 
@@ -453,7 +453,7 @@ var recommend = function () {
 			returner.push(oGDR.pop());
 		}
 	}
-	redoRekArray = returner;
+	readyRecArray = returner;
 	runFlow();
 };
 
@@ -488,9 +488,9 @@ recommend();
 
 
 function runFlow() {
-	for (var n in redoRekArray) {
-		if (lillaSystemetDB[redoRekArray[n][0]]) {//Ibland finns inte en votad dryck i databasen. Denna if ser till att bajs inte slår i taket när det händer.
-			doenaInEnTillDryckBa(redoRekArray[n][0],redoRekArray[n][1]);
+	for (var n in readyRecArray) {
+		if (monopolistsDatabase[readyRecArray[n][0]]) {//Ibland finns inte en votad dryck i databasen. Denna if ser till att bajs inte slår i taket när det händer.
+			doenaInEnTillDryckBa(readyRecArray[n][0],readyRecArray[n][1]);
 		}
 		else {
 			//ajax-bajjax, skicka en notification, typ e-mail till oss så vi kan fixa detta problem.
@@ -610,21 +610,21 @@ var treDataSet = [];
 var tvaoDataSet = [];
 var ettDataSet = [];
 
-for (var i = 0; i < redoRekArray.length; i++) {
-	if (redoRekArray[i][1] >= 4) {
-		femDataSet.push({properties: { title: redoRekArray[i][0]}});
+for (var i = 0; i < readyRecArray.length; i++) {
+	if (readyRecArray[i][1] >= 4) {
+		femDataSet.push({properties: { title: readyRecArray[i][0]}});
 	}
-	else if (redoRekArray[i][1] >= 3) {
-		fyraDataSet.push({properties: { title: redoRekArray[i][0]}});
+	else if (readyRecArray[i][1] >= 3) {
+		fyraDataSet.push({properties: { title: readyRecArray[i][0]}});
 	}
-	else if (redoRekArray[i][1] >= 2) {
-		treDataSet.push({properties: { title: redoRekArray[i][0]}});
+	else if (readyRecArray[i][1] >= 2) {
+		treDataSet.push({properties: { title: readyRecArray[i][0]}});
 	}
-	else if (redoRekArray[i][1] >= 1) {
-		tvaoDataSet.push({properties: { title: redoRekArray[i][0]}});
+	else if (readyRecArray[i][1] >= 1) {
+		tvaoDataSet.push({properties: { title: readyRecArray[i][0]}});
 	}
 	else {
-		ettDataSet.push({properties: { title: redoRekArray[i][0]}});
+		ettDataSet.push({properties: { title: readyRecArray[i][0]}});
 	}
 }	
 
