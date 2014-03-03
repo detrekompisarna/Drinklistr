@@ -1,6 +1,0 @@
-"D:/Users/Gianei/Documents/Titanium_Studio_Workspace/Drinklistr/build/android/gen/com/detrekompisarna/drick/ApplicationStylesheet.java"
-"D:/Users/Gianei/Documents/Titanium_Studio_Workspace/Drinklistr/build/android/gen/com/detrekompisarna/drick/AssetCryptImpl.java"
-"D:/Users/Gianei/Documents/Titanium_Studio_Workspace/Drinklistr/build/android/gen/com/detrekompisarna/drick/DrinklistrActivity.java"
-"D:/Users/Gianei/Documents/Titanium_Studio_Workspace/Drinklistr/build/android/gen/com/detrekompisarna/drick/DrinklistrAppInfo.java"
-"D:/Users/Gianei/Documents/Titanium_Studio_Workspace/Drinklistr/build/android/gen/com/detrekompisarna/drick/DrinklistrApplication.java"
-"D:/Users/Gianei/Documents/Titanium_Studio_Workspace/Drinklistr/build/android/gen/com/detrekompisarna/drick/R.java"
