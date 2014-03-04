@@ -7,7 +7,7 @@ console.log("Erik, din kod laddas och funkar");
 
 Ti.UI.setBackgroundColor('#232a35');
  
-function StyledWindow(title) {
+function StyledWindow(myTitle) {
         /*var win = Ti.UI.createWindow({
                 // Remove the status bar
                 // fullscreen: true,
@@ -15,7 +15,17 @@ function StyledWindow(title) {
                 statusBarStyle: Titanium.UI.iPhone.StatusBar.LIGHT_CONTENT,
                 top: 0
         });*/
-       	var win = Ti.UI.createWindow();
+        var win = Ti.UI.createWindow({
+                // Remove the status bar
+                // fullscreen: true,
+                // Moves the Window below the status bar
+                title: myTitle,
+    			backgroundColor:'#fff',
+                fullscreen: false,
+                navBarHidden: true,
+                top: 0
+        });
+       	//var win = Ti.UI.createWindow();
         return win;
 };
  
