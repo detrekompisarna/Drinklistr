@@ -83,6 +83,7 @@ localdb.execute('CREATE TABLE IF NOT EXISTS egnabetyg(drinkid INTEGER PRIMARY KE
 localdb.execute('CREATE TABLE IF NOT EXISTS drinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
 localdb.execute('CREATE TABLE IF NOT EXISTS smakgrannskap(anvid TEXT PRIMARY KEY,deladedrinkar INT,likhet FLOAT,score FLOAT)');
 localdb.execute('CREATE TABLE IF NOT EXISTS globaldrinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
+localdb.execute('CREATE TABLE IF NOT EXISTS unsynceddrinks(drinkid INTEGER PRIMARY KEY,uppdaterad FLOAT)');
 
 
 
@@ -417,14 +418,6 @@ function saollaPaoKategori(ai, arr) {
 	return true;
 }
 
-var addRating = function(arr) {
-	//Denna är nu gammal när SQLiten börjar funka. 
-	if (!UDB[arr[0]]) {
-		UDB[arr[0]] = {};
-		UDB[arr[0]].drinkbetyg = {};
-	}
-	UDB[arr[0]].drinkbetyg[arr[1]] = arr[2];
-};
 
 function pickRandomProperty(obj) {
     var propList = obj; //...
@@ -478,9 +471,6 @@ var form = {
 	kat: ["Öl", "Rött vin", "Brännviner"]
 };
 
-//Följande rad är nog för gammal nu när man betygsätter från en annan funktion funkar.
-//var bedoemningsSubmit = [inloggad.anvid,131,3]; //[Anvid, Artikelnummer, Rating(1-5)]
-//addRating(bedoemningsSubmit);
 
 
 recommend();
@@ -498,6 +488,41 @@ function runFlow() {
 	}
 }
 
+
+function addRating(clickedDrink,grade) {
+			localdb.execute('INSERT OR REPLACE INTO egnabetyg(drinkid,betyg,uppdaterad) VALUES (?,?,?)', clickedDrink, betyg, new Date());
+			var request = Titanium.Network.createHTTPClient();
+			var url = "http://drinklistr.se/dataupp.php";
+			request.open("POST", url);
+			var jsonen = {
+				anvid: inloggad.anvid,
+				drinkid: clickedDrink,
+				betyg: grade
+			};
+			request.send(jsonen);
+			request.onload = function () {
+				if (this.status == '200') {} else {
+					//alert('Transmission failed. Try again later. ' + this.status + " " + this.response);
+					localdb.execute('INSERT OR REPLACE INTO unSyncedDrinks(drinkid) VALUES (?)', clickedDrink);
+				}
+			};
+			//Från denna: http://developer.appcelerator.com/question/122347/createhttpclient---post-method
+}
+
+function syncOldUnSyncedDrinks() {
+	var drinksToSync = [];
+	var s;
+	var rows = localdb.execute('SELECT drinkid FROM unsynceddrinks');
+	while (rows.isValidRow()) {
+		drinksToSync.push(rows.fieldByName('drinkid'));
+	    rows.next();
+	};
+	for (var d = 0; d < drinksToSync; d++) {
+		localdb.execute('DELETE FROM unsynceddrinks WHERE drinkid=?',drinksToSync[d]);
+		s = localdb.execute('SELECT betyg FROM egnabetyg WHERE drinkid=?',drinksToSync[d]).fieldByName('betyg');
+		addRating(drinksToSync[d],s);
+	}
+}
 
 //Funktionen nedan funkade bra innan mergen med Erik.
 /**function runFlow(){
