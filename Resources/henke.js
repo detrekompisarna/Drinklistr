@@ -1,7 +1,7 @@
 //Banta ner UDB-objektet till minimum. Så konsolidera användarnamnen och .smakgrannar
 //Droppa själv från smakgrannar och smakgrannetabell
 //Gör så att endast top typ 100 smakgrannars drinkbetyg spelar roll och därmed behöver lagras i localdb.
-//Gör så att man faktiskt bara laddar ner uppdaterad data när appen startas.
+//Gör så att man faktiskt bara laddar ner updated data när appen startas.
 //Man bör kunna sortera på Koscher och Ekologiskt.
 //Man bör (kunna) separera drycker på årgång.
 //Förkorta JSONfilen som är vår systemet-databas. Förkorta alla kateborier först och främst.
@@ -79,11 +79,11 @@ data = data.replace(/[()]/g,'');
 var monopolistsDatabase = JSON.parse(data); //This is the Database from the monolopist, with price, year, name, category, etc.
 var readyRecArray = [];
 
-localdb.execute('CREATE TABLE IF NOT EXISTS egnabetyg(drinkid INTEGER PRIMARY KEY,betyg INTEGER,uppdaterad FLOAT)');
-localdb.execute('CREATE TABLE IF NOT EXISTS drinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
-localdb.execute('CREATE TABLE IF NOT EXISTS smakgrannskap(anvid TEXT PRIMARY KEY,deladedrinkar INT,likhet FLOAT,score FLOAT)');
-localdb.execute('CREATE TABLE IF NOT EXISTS globaldrinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,uppdaterad FLOAT)');
-localdb.execute('CREATE TABLE IF NOT EXISTS unsynceddrinks(drinkid INTEGER PRIMARY KEY,uppdaterad FLOAT)');
+localdb.execute('CREATE TABLE IF NOT EXISTS egnabetyg(drinkid INTEGER PRIMARY KEY,betyg INTEGER,updated FLOAT,uploaded INTEGER)');
+localdb.execute('CREATE TABLE IF NOT EXISTS drinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,updated FLOAT)');
+localdb.execute('CREATE TABLE IF NOT EXISTS smakgrannskap(anvid TEXT PRIMARY KEY,shareddrinks INT,likhet FLOAT,score FLOAT)');
+localdb.execute('CREATE TABLE IF NOT EXISTS globaldrinkscores(drinkid INTEGER PRIMARY KEY,score FLOAT,updated FLOAT)');
+
 
 
 
@@ -238,7 +238,7 @@ var listRecommendations = function(anv) {
 		UDB[anv].drinkScores.push([drink,sumOneDrinkScore(anv, drink)]); 
 		if (score > 0) {
 			//console.log(score);
-    		localdb.execute('INSERT OR REPLACE INTO drinkscores(drinkid,score,uppdaterad) VALUES (?,?,?)', drink,score,new Date());
+    		localdb.execute('INSERT OR REPLACE INTO drinkscores(drinkid,score,updated) VALUES (?,?,?)', drink,score,new Date());
 		}
 	}
 	UDB[anv].drinkScores.sort(function(a,b){return b[1]-a[1];});
@@ -284,10 +284,10 @@ function SyncDatabaseFrom(datum) {
 				andra[anv].deladeDrinkar = countCommonDrinks(self,andra[anv]);
 				andra[anv].likhet = calcTasteSimilarity(self,andra[anv]);
 				andra[anv].score = calculateNeighbourityScore(andra[anv]);
-				localdb.execute('INSERT OR REPLACE INTO smakgrannskap (anvid,deladedrinkar,likhet,score) VALUES (?,?,?,?)', anv,andra[anv].deladeDrinkar,andra[anv].likhet,andra[anv].score);
-				localdb.execute('CREATE TABLE IF NOT EXISTS kuk' + anv + ' (drinkid INT PRIMARY KEY,betyg INT,uppdaterad FLOAT)');
+				localdb.execute('INSERT OR REPLACE INTO smakgrannskap (anvid,shareddrinks,likhet,score) VALUES (?,?,?,?)', anv,andra[anv].deladeDrinkar,andra[anv].likhet,andra[anv].score);
+				localdb.execute('CREATE TABLE IF NOT EXISTS kuk' + anv + ' (drinkid INT PRIMARY KEY,betyg INT,updated FLOAT)');
 				for (var drink in andra[anv].drinkbetyg) {
-					localdb.execute("INSERT OR REPLACE INTO kuk" + anv + " (drinkid,betyg,uppdaterad) VALUES (?,?,?)",drink,andra[anv].drinkbetyg[drink],new Date());
+					localdb.execute("INSERT OR REPLACE INTO kuk" + anv + " (drinkid,betyg,updated) VALUES (?,?,?)",drink,andra[anv].drinkbetyg[drink],new Date());
 				}
 			}
 
@@ -303,7 +303,7 @@ function SyncDatabaseFrom(datum) {
 if(Ti.App.Properties.getString('appLaunch')){//Detta (är true och) händer om jag redan har öppnat appen innan nån gång.
 	//Uppdate the local ratingDB.
   console.log("2+:a gaongen appen oeppnas...");
-  //localdb.execute('INSERT OR REPLACE INTO users (anvid,uppdaterad) VALUES (?,?)', inloggad.anvid,new Date());
+  //localdb.execute('INSERT OR REPLACE INTO users (anvid,updated) VALUES (?,?)', inloggad.anvid,new Date());
 }
 else{//Första gången appen launchas på denna telefon
   //Ti.App.Propoerties.setString("GaongerÖppnad",1);
@@ -490,7 +490,6 @@ function runFlow() {
 
 
 function addRating(clickedDrink,grade) {
-			localdb.execute('INSERT OR REPLACE INTO egnabetyg(drinkid,betyg,uppdaterad) VALUES (?,?,?)', clickedDrink, betyg, new Date());
 			var request = Titanium.Network.createHTTPClient();
 			var url = "http://drinklistr.se/dataupp.php";
 			request.open("POST", url);
@@ -501,9 +500,13 @@ function addRating(clickedDrink,grade) {
 			};
 			request.send(jsonen);
 			request.onload = function () {
-				if (this.status == '200') {} else {
+				if (this.status == '200') { //This means "if the upload is successful".
+					localdb.execute('INSERT OR REPLACE INTO egnabetyg(drinkid,betyg,updated,uploaded) VALUES (?,?,?,?)', clickedDrink, betyg, new Date(),1);
+
+				} else {
 					//alert('Transmission failed. Try again later. ' + this.status + " " + this.response);
-					localdb.execute('INSERT OR REPLACE INTO unSyncedDrinks(drinkid) VALUES (?)', clickedDrink);
+					localdb.execute('INSERT OR REPLACE INTO egnabetyg(drinkid,betyg,updated,uploaded) VALUES (?,?,?,?)', clickedDrink, betyg, new Date(),0);
+
 				}
 			};
 			//Från denna: http://developer.appcelerator.com/question/122347/createhttpclient---post-method
@@ -512,15 +515,13 @@ function addRating(clickedDrink,grade) {
 function syncOldUnSyncedDrinks() {
 	var drinksToSync = [];
 	var s;
-	var rows = localdb.execute('SELECT drinkid FROM unsynceddrinks');
+	var rows = localdb.execute('SELECT * FROM egnabetyg WHERE uploaded=0');
 	while (rows.isValidRow()) {
-		drinksToSync.push(rows.fieldByName('drinkid'));
+		drinksToSync.push([rows.fieldByName('drinkid'),rows.fieldByName('betyg')]);
 	    rows.next();
 	};
 	for (var d = 0; d < drinksToSync; d++) {
-		localdb.execute('DELETE FROM unsynceddrinks WHERE drinkid=?',drinksToSync[d]);
-		s = localdb.execute('SELECT betyg FROM egnabetyg WHERE drinkid=?',drinksToSync[d]).fieldByName('betyg');
-		addRating(drinksToSync[d],s);
+		addRating(drinksToSync[d][0],drinksToSync[d][1]);
 	}
 }
 
@@ -563,7 +564,7 @@ rekommendationslista.addEventListener('itemclick', function (e) {
 		} else {
 			console.log("Tabell finns inte.");
 		}
-		localdb.execute('INSERT OR REPLACE INTO egnabetyg(drinkid,betyg,uppdaterad) VALUES (?,?,?)', klickadDryck, betyg, new Date());
+		localdb.execute('INSERT OR REPLACE INTO egnabetyg(drinkid,betyg,updated) VALUES (?,?,?)', klickadDryck, betyg, new Date());
 		//localdb.execute('UPDATE condition SET icon=? WHERE id=?',importIcon,dbConditionId);
 
 		localdb.close();
