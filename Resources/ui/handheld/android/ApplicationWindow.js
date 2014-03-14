@@ -57,6 +57,7 @@ function ApplicationWindow() {
 		left : circle.left
 	};
 
+	var isFirstMove = true;
 	var containerWidth;
 	circle.addEventListener('touchstart', function(e) {
 		Titanium.API.info('Touch start: ' + JSON.stringify(e));
@@ -79,7 +80,13 @@ function ApplicationWindow() {
 		//circlePosition.top += e.y - basey;
 		//circlePosition.left += e.x - basex;
 		//basex += e.x - basex;
-		var newLeft = -(startx - e.x);
+		
+		/*if (isFirstMove){
+			startx = startx - e.x;
+			isFirstMove = false;
+		}*/
+		//var newLeft = -(startx - e.x);
+		var newLeft = -(containerWidth - e.x);
 		Ti.API.info('left : ' + newLeft);
 		if ((newLeft > 0)) {
 			newLeft = 0;
@@ -88,11 +95,18 @@ function ApplicationWindow() {
 			newLeft = -containerWidth;
 		}
 
-		rowContainer.animate({
-			//top : circlePosition.top,
-			left : newLeft,
-			duration : 1
-		});
+		if (isFirstMove){
+			rowContainer.animate({
+				left : newLeft,
+				duration : 50
+			});
+			isFirstMove = false;
+		} else {
+			rowContainer.animate({
+				left : newLeft,
+				duration : 1
+			});
+		}
 
 		// reset absolute position to current position so next event will be relative to current position
 		//basex = e.x;
@@ -109,8 +123,8 @@ function ApplicationWindow() {
 			startx = 0;
 		if (startx > containerWidth)
 			startx = containerWidth;*/
-		if (startx < containerWidth * 0.5) {
-			startx = containerWidth * 0.34;
+		if (e.x < containerWidth * 0.5) {
+			//startx = containerWidth * 0.34;
 			/*rowContainer.animate({
 			 left : rowContainer.left + 3,
 			 duration : 100
@@ -118,7 +132,7 @@ function ApplicationWindow() {
 			setTimeout(function() {
 				rowContainer.animate({
 					//top : circlePosition.top,
-					left : -startx,
+					left : -containerWidth,
 					duration : 50
 				});
 			}, 50);
@@ -127,11 +141,12 @@ function ApplicationWindow() {
 			setTimeout(function() {
 				rowContainer.animate({
 					//top : circlePosition.top,
-					left : -startx,
+					left : -(containerWidth * (1-0.66)),
 					duration : 50
 				});
 			}, 50);
 		}
+		isFirstMove = true;
 		Ti.API.info('Endx : ' + startx);
 		/*if (circle.left > 100) {
 		circle.animate({
