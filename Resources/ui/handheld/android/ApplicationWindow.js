@@ -1,226 +1,72 @@
 //Application Window Component Constructor
 function ApplicationWindow() {
 	//load component dependencies
-	//var FirstView = require('ui/common/FirstView');
+	var DraggingRow = require('ui/common/DraggingRow');
+	var DrinkRowItem = require('ui/common/DrinkRowItem');
+	var DrinkRowStar = require('ui/common/DrinkRowStar');
+
+	var snapTresholdFraction = 0.5;
+	var snapOpenFraction = 0.65;
 
 	//create component instance
 	var self = Ti.UI.createWindow({
-		backgroundColor : '#ffffff',
-		navBarHidden : true,
-		exitOnClose : true
+		backgroundColor : '#FFFFFF',
+		fullscreen : false,
+		navBarHidden : true
 	});
 
-	/*var pWidth = Ti.Platform.displayCaps.platformWidth;
-	var pHeight = Ti.Platform.displayCaps.platformHeight;
-	Ti.App.SCREEN_WIDTH = (pWidth > pHeight) ? pHeight : pWidth;
-	Ti.App.SCREEN_HEIGHT = (pWidth > pHeight) ? pWidth : pHeight;*/
-
-	// object to store last event position
-	var basex;
-	var startx = "starting";
-	var circle = Ti.UI.createView({
-		backgroundColor : '#BBBBBB',
-		top : '123dip',
-		//left : 0,
-		width : Ti.UI.FILL,
-		//width : Ti.App.SCREEN_WIDTH * 3 + "px",
-		height : '123dip'
+	//------------------------
+	//header
+	var header = Ti.UI.createView({
+        backgroundColor: '#232a35',
+        height: '59dip',
+        top: 0
 	});
-	var rowContainer = Ti.UI.createView({
-		touchEnabled : false,
-		backgroundColor : '#AAAAAA',
-		width : '200%',
-		left : '-100%',
-		height : '123dip'
-	});
-	var circle2 = createRow('#008FD5');
-	circle2.left = "50%";
-	rowContainer.add(circle2);
-	circle.add(rowContainer);
-	//Titanium.API.info('Container width:' + circle.width);
-
-	var left = createRow('#FF8FD5');
-	//left.left = "-100%";
-	rowContainer.add(left);
-	//var right = createRow(0);
-	//right.left = "33.33%";
-
-	//var maxwidth = circle.width;
-	//circle.width = maxwidth * 3;
-	//circle2.left = maxwidth;
-
-	self.add(circle);
-
-	// circle position before it has been animated
-	var circlePosition = {
-		top : circle.top,
-		left : circle.left
-	};
-
-	var isFirstMove = true;
-	var containerWidth;
-	circle.addEventListener('touchstart', function(e) {
-		Titanium.API.info('Touch start: ' + JSON.stringify(e));
-		// get absolute position at start
-		containerWidth = rowContainer.size.width;
-		containerWidth /= 2;
-		if (startx == "starting")
-			startx = containerWidth;
-		startx += e.x;
-
-		Ti.API.info('Width : ' + containerWidth);
-		//basey = e.y;
-		//touchMoveBase.set(e.globalPoint);
-	});
-
-	circle.addEventListener('touchmove', function(e) {
-		//if (isMove++ > 15){
-		Ti.API.info('X : ' + e.x);
-		// update the co-ordinates based on movement since last movement or touch start
-		//circlePosition.top += e.y - basey;
-		//circlePosition.left += e.x - basex;
-		//basex += e.x - basex;
-		
-		/*if (isFirstMove){
-			startx = startx - e.x;
-			isFirstMove = false;
-		}*/
-		//var newLeft = -(startx - e.x);
-		var newLeft = -(containerWidth - e.x);
-		Ti.API.info('left : ' + newLeft);
-		if ((newLeft > 0)) {
-			newLeft = 0;
-		}
-		if (newLeft < -containerWidth) {
-			newLeft = -containerWidth;
-		}
-
-		if (isFirstMove){
-			rowContainer.animate({
-				left : newLeft,
-				duration : 50
-			});
-			isFirstMove = false;
-		} else {
-			rowContainer.animate({
-				left : newLeft,
-				duration : 1
-			});
-		}
-
-		// reset absolute position to current position so next event will be relative to current position
-		//basex = e.x;
-		//basey = e.y;
-		//isMove = 0;
-		//globalPoint
-		//}
-		//isMove = !isMove;
-	});
-
-	circle.addEventListener('touchend', function(e) {
-		startx = startx - e.x;
-		/*if (startx < 0)
-			startx = 0;
-		if (startx > containerWidth)
-			startx = containerWidth;*/
-		if (e.x < containerWidth * 0.5) {
-			//startx = containerWidth * 0.34;
-			/*rowContainer.animate({
-			 left : rowContainer.left + 3,
-			 duration : 100
-			 });*/
-			setTimeout(function() {
-				rowContainer.animate({
-					//top : circlePosition.top,
-					left : -containerWidth,
-					duration : 50
-				});
-			}, 50);
-		} else {
-			startx = containerWidth;
-			setTimeout(function() {
-				rowContainer.animate({
-					//top : circlePosition.top,
-					left : -(containerWidth * (1-0.66)),
-					duration : 50
-				});
-			}, 50);
-		}
-		isFirstMove = true;
-		Ti.API.info('Endx : ' + startx);
-		/*if (circle.left > 100) {
-		circle.animate({
-		left : ('200dip'),
-		duration : 250
-		});
-		} else {
-		circle.animate({
-		left : 0,
-		duration : 250
-		});
-		}*/
-		//Titanium.API.info('Stop drag: ' + JSON.stringify(e));
-	});
-
-	var button = Titanium.UI.createButton({
-		title : 'Reset',
-		top : '00dip',
-		width : '100dip',
-		height : '50dip'
-	});
-	button.addEventListener('click', function(e) {
-		circle.left = -Ti.App.SCREEN_WIDTH + "px";
-		startx = Ti.App.SCREEN_WIDTH;
-	});
-	self.add(button);
-
-	return self;
-}
-
-function createRow(color) {
-	var enabledWrapperView = Ti.UI.createView({
-		backgroundColor : color,
-		objName : 'enabledWrapperView',
-		left : 0,
-		width : '50%',
-		touchEnabled : false,
-		height : '123dip'
-	});
-
-	var stretchBgRedwine = Ti.UI.createImageView({
-		image : Titanium.Filesystem.resourcesDirectory + 'img/stretchbg_redwine.jpg',
-		left : 0,
-		top : 0,
-		touchEnabled : false,
-		width : '7dip',
-		height : '123dip'
-	});
-	enabledWrapperView.add(stretchBgRedwine);
-
-	var labelProductInfo = Ti.UI.createLabel({
-		color : '#72767c',
+	var flowLabel = Ti.UI.createLabel({
+		color : 'white',
 		font : {
 			fontFamily : 'Lato-Bold',
-			fontSize : defaultFontSize - 3
+			fontSize : defaultFontSize + 2 + 'dip'
 		},
-		text : 'PRIS APK 1,0',
-		touchEnabled : false,
-		left : '23dip',
-		top : '97dip'
+		text : 'Flöde',
+		textAlign : 'center',
+		bottom : '14dip'
 	});
-	enabledWrapperView.add(labelProductInfo);
+	header.add(flowLabel);
+	self.add(header);
 
-	var flowArrow = Ti.UI.createImageView({
-		image : Titanium.Filesystem.resourcesDirectory + 'img/flowarrow.png',
-		right : '10dip',
-		top : '53dip',
-		touchEnabled : false,
-		width : '10dip',
-		height : '17dip'
+	//sub header
+	var subHeader = Ti.UI.createView({
+		backgroundColor : '#2e353f',
+		height : '35dip',
+		top: '59dip'
 	});
-	enabledWrapperView.add(flowArrow);
 
-	return enabledWrapperView;
+	var subFlowLabel = Ti.UI.createLabel({
+		color : 'white',
+		font : {
+			fontFamily : 'Lato-Bold',
+			fontSize : defaultFontSize+'dip'
+		},
+		text : 'Dessa borde du tycka asamycket om', //Bättre copy!
+		textAlign : 'center',
+		verticalAlign : 'center'
+	});
+	subHeader.add(subFlowLabel);
+	self.add(subHeader);
+
+	//table
+	var tableData = [];
+
+	tableData.push(new DraggingRow(new DrinkRowStar(), new DrinkRowItem(), snapTresholdFraction, snapOpenFraction));
+	var tableView = Ti.UI.createTableView({
+		backgroundColor : 'white',
+		top : '94dip',
+		data : tableData
+	});
+	self.add(tableView);
+
+	return self;
 }
 
 //make constructor function the public component interface
