@@ -18,7 +18,7 @@
  */
 
 //bootstrap and check dependencies
-if (Ti.version < 1.8 ) {
+/*if (Ti.version < 1.8 ) {
 	alert('Sorry - this application template requires Titanium Mobile SDK 1.8 or later');
 }
 
@@ -49,7 +49,7 @@ if (Ti.version < 1.8 ) {
 		}
 	}
 	new Window().open();
-})();
+})();*/
 
 
 
@@ -480,7 +480,7 @@ recommend();
 function runFlow() {
 	for (var n in readyRecArray) {
 		if (monopolistsDatabase[readyRecArray[n][0]]) {//Ibland finns inte en votad dryck i databasen. Denna if ser till att bajs inte slår i taket när det händer.
-			doenaInEnTillDryckBa(readyRecArray[n][0],readyRecArray[n][1]);
+			//doenaInEnTillDryckBa(readyRecArray[n][0],readyRecArray[n][1]);
 		}
 		else {
 			//ajax-bajjax, skicka en notification, typ e-mail till oss så vi kan fixa detta problem.

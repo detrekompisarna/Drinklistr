@@ -1,5 +1,9 @@
-function DrinkRowItem(){
-	//row wrapper
+/**
+ * 
+ * @param {int} drinkId the array position of the drink in the db
+ */
+function DrinkRowItem(drinkId){
+		//row wrapper
         self = Ti.UI.createView({
 	        //rowID : drinkId,
 	        touchEnabled : false,
@@ -15,22 +19,22 @@ function DrinkRowItem(){
         });
         self.add(stretchBgRedwine);
 		
-		//if (monopolistsDatabase[drinkId].kat) { //Den här if:en behöver vara med för att alla drycker verkar in ha en kategori.
+		if (monopolistsDatabase[drinkId].kat) { //Den här if:en behöver vara med för att alla drycker verkar in ha en kategori.
         	var labelProductCategory = Ti.UI.createLabel({
                 	color:'#212a38',
                 	font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3+'dip'},
-                	text:"Drink name",
+                	text: monopolistsDatabase[drinkId].kat.toUpperCase(),
                 	touchEnabled : false,
             	    left:'23dip', top: '19dip'
         	});
-        //}
+        }
        
         self.add(labelProductCategory);
  
         var labelProductName = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+4+'dip'},
-                text:"name", //Lägg till "..." om den är längre än ca 27 tecken
+                text: monopolistsDatabase[drinkId].namn.substr(0,27), //Lägg till "..." om den är längre än ca 27 tecken
                 touchEnabled : false,
                 left:'23dip', top: '45dip'
         });
@@ -39,7 +43,7 @@ function DrinkRowItem(){
         var labelProductSubname = Ti.UI.createLabel({
                 color:'#212a38',
                 font:{fontFamily:'Lato-Black', fontSize:defaultFontSize+2+'dip'},
-                text:'subname', //Lägg till en "if .namn2 finns..." på denna.
+                text: monopolistsDatabase[drinkId].namn2, //Lägg till en "if .namn2 finns..." på denna.
                 touchEnabled : false,
                 left:'23dip', top: '67dip'
         });
@@ -48,7 +52,7 @@ function DrinkRowItem(){
         var labelProductInfo = Ti.UI.createLabel({
                 color:'#72767c',
                 font:{fontFamily:'Lato-Bold', fontSize:defaultFontSize-3+'dip'},
-                text:'PRIS kr    ALKOHOL     APK 1,0',
+                text: 'PRIS ' + monopolistsDatabase[drinkId].pris[0] + ' kr    ALKOHOL ' + monopolistsDatabase[drinkId].alk + '    APK 1,0',
                 touchEnabled : false,
                 left:'23dip', top: '97dip'
         });

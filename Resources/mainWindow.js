@@ -1,4 +1,11 @@
+// old app.js file
+// file not used anymore.
+// copy code from here to correct places.
+
+
+
 var defaultFontSize = 14;
+
 
 console.log("Erik, din kod laddas och funkar");
  

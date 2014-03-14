@@ -1,21 +1,21 @@
 //Dragging Row Component Constructor
 
 /**
- * 
+ *
  * @param {Object} rowItemLeft object displayed in the left
  * @param {Object} rowItemRight object displayed in the right
  * @param {Object} snapTresholdFraction percentage from where the ending finger position will snap
  * @param {Object} snapOpenFraction snapping percentage open position
  */
 function DraggingRow(rowItemLeft, rowItemRight, snapTresholdFraction, snapOpenFraction) {
-	
-	self= Ti.UI.createTableViewRow({
-                className:'forumEvent', // used to improve table performance
-                selectedBackgroundColor:'white',
-                //rowIndex:drinkId, // custom property, useful for determining the row during events
-                height:'123dip',
-                touchEnabled : true
-        });
+
+	self = Ti.UI.createTableViewRow({
+		className : 'forumEvent', // used to improve table performance
+		selectedBackgroundColor : 'white',
+		//rowIndex:drinkId, // custom property, useful for determining the row during events
+		height : '123dip',
+		touchEnabled : true
+	});
 	var rowTouchContainer = Ti.UI.createView({
 		//backgroundColor : '#BBBBBB',
 		//top : '123dip',
@@ -37,8 +37,7 @@ function DraggingRow(rowItemLeft, rowItemRight, snapTresholdFraction, snapOpenFr
 
 	rowTouchContainer.add(rowMovingContainer);
 	self.add(rowTouchContainer);
-	
-	
+
 	//----------------------------------------
 	//used to first animation, when animating to finger position.
 	var isFirstMove = true;
@@ -46,6 +45,7 @@ function DraggingRow(rowItemLeft, rowItemRight, snapTresholdFraction, snapOpenFr
 	var isSetRowMovingContainerWidth = true;
 	//used for proper calculations in positioning and snapping.
 	var rowMovingContainerWidth;
+	var startTouchX;
 
 	rowTouchContainer.addEventListener('touchstart', function(e) {
 		// Define the width of the container to have an appropriate value for calculations
@@ -54,6 +54,7 @@ function DraggingRow(rowItemLeft, rowItemRight, snapTresholdFraction, snapOpenFr
 			rowMovingContainerWidth /= 2;
 			isSetRowMovingContainerWidth = false;
 		}
+		startTouchX = e.x;
 	});
 
 	rowTouchContainer.addEventListener('touchmove', function(e) {
@@ -61,12 +62,15 @@ function DraggingRow(rowItemLeft, rowItemRight, snapTresholdFraction, snapOpenFr
 		var newLeft = -(rowMovingContainerWidth - e.x);
 		//Ti.API.info('newLeft: ' + newLeft);
 
-		var duration = ( isFirstMove ? 50 : 1);
-		rowMovingContainer.animate({
-			left : newLeft,
-			duration : duration
-		});
-		isFirstMove = false;
+		//start moving only if dragged enough
+		if ((Math.abs(startTouchX - e.x) > rowMovingContainerWidth * 0.05) || !isFirstMove) {
+			var duration = ( isFirstMove ? 50 : 1);
+			rowMovingContainer.animate({
+				left : newLeft,
+				duration : duration
+			});
+			isFirstMove = false;
+		};
 	});
 
 	rowTouchContainer.addEventListener('touchend', function(e) {
@@ -85,9 +89,18 @@ function DraggingRow(rowItemLeft, rowItemRight, snapTresholdFraction, snapOpenFr
 
 		isFirstMove = true;
 	});
-	
+
+	rowTouchContainer.addEventListener('touchcancel', function(e) {
+		setTimeout(function() {
+			rowMovingContainer.animate({
+				left : -rowMovingContainerWidth,
+				duration : 50
+			});
+		}, 50);
+	});
+
 	return self;
-	
+
 }
 
 //make constructor function the public component interface

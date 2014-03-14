@@ -1,9 +1,9 @@
 //Application Window Component Constructor
-function ApplicationWindow() {
+function DrinkList() {
 	//load component dependencies
-	var DraggingRow = require('ui/common/DraggingRow');
-	var DrinkRowItem = require('ui/common/DrinkRowItem');
-	var DrinkRowStar = require('ui/common/DrinkRowStar');
+	var DraggingRow = require('ui/common/tableView/DraggingRow');
+	var DrinkRowItem = require('ui/common/tableView/DrinkRowItem');
+	var DrinkRowStar = require('ui/common/tableView/DrinkRowStar');
 
 	var snapTresholdFraction = 0.5;
 	var snapOpenFraction = 0.65;
@@ -58,7 +58,16 @@ function ApplicationWindow() {
 	//table
 	var tableData = [];
 
-	tableData.push(new DraggingRow(new DrinkRowStar(), new DrinkRowItem(), snapTresholdFraction, snapOpenFraction));
+	for (var n in readyRecArray) {
+		if (monopolistsDatabase[readyRecArray[n][0]]) {//Ibland finns inte en votad dryck i databasen. Denna if ser till att bajs inte slår i taket när det händer.
+			//doenaInEnTillDryckBa(readyRecArray[n][0],readyRecArray[n][1]);
+			tableData.push(new DraggingRow(new DrinkRowStar(), new DrinkRowItem(readyRecArray[n][0]), snapTresholdFraction, snapOpenFraction));
+		}
+		else {
+			//ajax-bajjax, skicka en notification, typ e-mail till oss så vi kan fixa detta problem.
+		}
+	}
+	
 	var tableView = Ti.UI.createTableView({
 		backgroundColor : 'white',
 		top : '94dip',
@@ -70,4 +79,4 @@ function ApplicationWindow() {
 }
 
 //make constructor function the public component interface
-module.exports = ApplicationWindow;
+module.exports = DrinkList;
