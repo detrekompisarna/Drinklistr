@@ -9,7 +9,7 @@ function ApplicationWindow() {
 		navBarHidden : true,
 		exitOnClose : true
 	});
-	
+
 	/*var pWidth = Ti.Platform.displayCaps.platformWidth;
 	var pHeight = Ti.Platform.displayCaps.platformHeight;
 	Ti.App.SCREEN_WIDTH = (pWidth > pHeight) ? pHeight : pWidth;
@@ -17,8 +17,8 @@ function ApplicationWindow() {
 
 	// object to store last event position
 	var basex;
-	var startx = 0;
-var circle = Ti.UI.createView({
+	var startx = "starting";
+	var circle = Ti.UI.createView({
 		backgroundColor : '#BBBBBB',
 		top : '123dip',
 		//left : 0,
@@ -26,26 +26,25 @@ var circle = Ti.UI.createView({
 		//width : Ti.App.SCREEN_WIDTH * 3 + "px",
 		height : '123dip'
 	});
-	var rowContainer = 
-		Ti.UI.createView({
-			touchEnabled : false,
-			backgroundColor : '#AAAAAA',
-			width : '200%',
-			left: 0,
-			height : '123dip'
-		});
+	var rowContainer = Ti.UI.createView({
+		touchEnabled : false,
+		backgroundColor : '#AAAAAA',
+		width : '200%',
+		left : '-100%',
+		height : '123dip'
+	});
 	var circle2 = createRow('#008FD5');
 	circle2.left = "50%";
 	rowContainer.add(circle2);
 	circle.add(rowContainer);
 	//Titanium.API.info('Container width:' + circle.width);
-	
+
 	var left = createRow('#FF8FD5');
 	//left.left = "-100%";
 	rowContainer.add(left);
 	//var right = createRow(0);
 	//right.left = "33.33%";
-	
+
 	//var maxwidth = circle.width;
 	//circle.width = maxwidth * 3;
 	//circle2.left = maxwidth;
@@ -62,9 +61,12 @@ var circle = Ti.UI.createView({
 	circle.addEventListener('touchstart', function(e) {
 		Titanium.API.info('Touch start: ' + JSON.stringify(e));
 		// get absolute position at start
-		startx += e.x;
 		containerWidth = rowContainer.size.width;
-		containerWidth /=2 ;
+		containerWidth /= 2;
+		if (startx == "starting")
+			startx = containerWidth;
+		startx += e.x;
+
 		Ti.API.info('Width : ' + containerWidth);
 		//basey = e.y;
 		//touchMoveBase.set(e.globalPoint);
@@ -79,17 +81,19 @@ var circle = Ti.UI.createView({
 		//basex += e.x - basex;
 		var newLeft = -(startx - e.x);
 		Ti.API.info('left : ' + newLeft);
-		if((newLeft > 0)){
+		if ((newLeft > 0)) {
 			newLeft = 0;
 		}
-		if (newLeft < -containerWidth ){
+		if (newLeft < -containerWidth) {
 			newLeft = -containerWidth;
 		}
+
 		rowContainer.animate({
-				//top : circlePosition.top,
-				left : newLeft,
-				duration : 50
-			});
+			//top : circlePosition.top,
+			left : newLeft,
+			duration : 1
+		});
+
 		// reset absolute position to current position so next event will be relative to current position
 		//basex = e.x;
 		//basey = e.y;
@@ -101,25 +105,47 @@ var circle = Ti.UI.createView({
 
 	circle.addEventListener('touchend', function(e) {
 		startx = startx - e.x;
-		if (startx < 0)
+		/*if (startx < 0)
 			startx = 0;
-		if (startx > containerWidth )
-			startx = containerWidth;
-		/*if (circle.left > 100) {
-			circle.animate({
-				left : ('200dip'),
-				duration : 250
-			});
+		if (startx > containerWidth)
+			startx = containerWidth;*/
+		if (startx < containerWidth * 0.5) {
+			startx = containerWidth * 0.34;
+			/*rowContainer.animate({
+			 left : rowContainer.left + 3,
+			 duration : 100
+			 });*/
+			setTimeout(function() {
+				rowContainer.animate({
+					//top : circlePosition.top,
+					left : -startx,
+					duration : 50
+				});
+			}, 50);
 		} else {
-			circle.animate({
-				left : 0,
-				duration : 250
-			});
+			startx = containerWidth;
+			setTimeout(function() {
+				rowContainer.animate({
+					//top : circlePosition.top,
+					left : -startx,
+					duration : 50
+				});
+			}, 50);
+		}
+		Ti.API.info('Endx : ' + startx);
+		/*if (circle.left > 100) {
+		circle.animate({
+		left : ('200dip'),
+		duration : 250
+		});
+		} else {
+		circle.animate({
+		left : 0,
+		duration : 250
+		});
 		}*/
-		Titanium.API.info('Stop drag: ' + JSON.stringify(e));
+		//Titanium.API.info('Stop drag: ' + JSON.stringify(e));
 	});
-
-	
 
 	var button = Titanium.UI.createButton({
 		title : 'Reset',
