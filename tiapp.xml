@@ -16,7 +16,7 @@
     <navbar-hidden>false</navbar-hidden>
     <analytics>true</analytics>
     <guid>8ebe67eb-ac4f-48a7-9868-c7a518810a7c</guid>
-    <property name="ti.ui.defaultunit" type="string">dip</property>
+    <property name="ti.ui.defaultunit" type="string">system</property>
     <iphone>
         <orientations device="iphone">
             <orientation>Ti.UI.PORTRAIT</orientation>
@@ -29,9 +29,7 @@
         </orientations>
     </iphone>
     <android xmlns:android="http://schemas.android.com/apk/res/android">
-    	<uses-sdk 
-    		android:targetSdkVersion="15"
-	    	android:minSdkVersion="15" />
+        <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="15"/>
     </android>
     <mobileweb>
         <precache/>
